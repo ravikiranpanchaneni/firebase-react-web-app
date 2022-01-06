@@ -1,9 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function AddEditRecipeForm({ handleAddRecipe }) {
+function AddEditRecipeForm({
+  existingRecipe,
+  handleAddRecipe,
+  handleUpdateRecipe,
+  handleDeleteRecipe,
+  handleEditRecipeCancel,
+}) {
+  useEffect(() => {
+    if (existingRecipe) {
+      setName(existingRecipe.name);
+      setCategory(existingRecipe.category);
+      setDirections(existingRecipe.directions);
+      setpublishedDate(
+        existingRecipe.publishedDate.toISOString().split("T")[0]
+      );
+      setIngrerdients(existingRecipe.ingredients);
+    } else {
+      resetForm();
+    }
+  }, [existingRecipe]);
+
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
-  const [publishDate, setPublishDate] = useState(
+  const [publishedDate, setpublishedDate] = useState(
     new Date().toString().split("T")[0]
   );
   const [directions, setDirections] = useState("");
@@ -17,18 +37,23 @@ function AddEditRecipeForm({ handleAddRecipe }) {
       alert("Ingredients can not be Empty. Please add atleast one Ingredient");
       return;
     }
-    const isPublished = new Date(publishDate) <= new Date() ? true : false;
+    const isPublished = new Date(publishedDate) <= new Date() ? true : false;
 
     const newRecipe = {
       name,
       category,
-      publishDate: new Date(publishDate),
+      publishedDate: new Date(publishedDate),
       directions,
       ingredients,
       isPublished,
     };
 
-    handleAddRecipe(newRecipe);
+    if (existingRecipe) {
+      handleUpdateRecipe(newRecipe, existingRecipe.id);
+    } else {
+      handleAddRecipe(newRecipe);
+      resetForm();
+    }
   }
 
   async function handleAddIngredient(e) {
@@ -44,12 +69,20 @@ function AddEditRecipeForm({ handleAddRecipe }) {
     setIngredientName("");
   }
 
+  function resetForm() {
+    setName("");
+    setCategory("");
+    setDirections("");
+    setpublishedDate("");
+    setIngrerdients([]);
+  }
+
   return (
     <form
       onSubmit={handleRecipeFormSubmit}
       className="add-edit-recipe-form-container"
     >
-      <h2>Add a new Recipe</h2>
+      {existingRecipe ? <h2>Update the Recipe</h2> : <h2>Add a new Recipe</h2>}
       <div className="top-form-section">
         <div className="fields">
           <label className="recipe-label input-label">
@@ -99,8 +132,8 @@ function AddEditRecipeForm({ handleAddRecipe }) {
             <input
               type="date"
               required
-              value={publishDate}
-              onChange={(e) => setPublishDate(e.target.value)}
+              value={publishedDate}
+              onChange={(e) => setpublishedDate(e.target.value)}
               className="input-text"
             ></input>
           </label>
@@ -163,8 +196,26 @@ function AddEditRecipeForm({ handleAddRecipe }) {
       </div>
       <div className="action-buttons">
         <button type="submit" className="primary-button action-button">
-          Create Recipe
+          {existingRecipe ? "Update Recipe" : "Create Recipe"}
         </button>
+        {existingRecipe ? (
+          <>
+            <button
+              type="button"
+              onClick={handleEditRecipeCancel}
+              className="primary-button action-button"
+            >
+              CANCEL
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteRecipe(existingRecipe.id)}
+              className="primary-button action-button"
+            >
+              DELETE
+            </button>
+          </>
+        ) : null}
       </div>
     </form>
   );
